@@ -1,13 +1,13 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
+from schemas.request_schema import ImageRequest
+from services.inference_service import run_inference
 
 app = FastAPI()
 
-
-@app.get("/")
-async def root():
-    return {"message": "Hello World"}
-
-
-@app.get("/hello/{name}")
-async def say_hello(name: str):
-    return {"message": f"Hello {name}"}
+@app.post("/analyze")
+async def analyze_image(request: ImageRequest):
+    try:
+        result = run_inference(request.image_url)
+        return result
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
