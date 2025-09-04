@@ -1,22 +1,27 @@
 def parse_results(results):
-    return {item["label"]: item["score"] for item in results}
 
-def cross_validate(result1, result2):
-    res1 = parse_results(result1)
-    res2 = parse_results(result2)
+    return {item["label"].lower(): item["score"] for item in results}
 
-    ai_avg = (res1.get("AI", 0) + res2.get("AI", 0)) / 2
-    real_avg = (res1.get("Real", 0) + res2.get("Real", 0)) / 2
+def cross_validate(results_list):
 
-    total = ai_avg + real_avg
-    ai_prob = (ai_avg / total) * 100 if total > 0 else 0
-    real_prob = (real_avg / total) * 100 if total > 0 else 0
+    ai_scores, real_scores = [], []
 
-    # confidence 등급
-    if ai_prob >= 70 or real_prob >= 70:
-        decision = "Certain"
+    for result in results_list:
+        parsed = parse_results(result)
+        ai_scores.append(parsed.get("artificial", parsed.get("ai", 0)))
+        real_scores.append(parsed.get("human", parsed.get("real", 0)))
+
+    ai_avg = sum(ai_scores) / len(ai_scores)
+    real_avg = sum(real_scores) / len(real_scores)
+
+    # Confidence level
+    if ai_avg > 0.7:
+        decision = "AI Generated"
         confidence = "High"
-    elif 30 <= ai_prob <= 70 or 30 <= real_prob <= 70:
+    elif real_avg > 0.7:
+        decision = "Real Image"
+        confidence = "High"
+    elif 0.3 < ai_avg < 0.7:
         decision = "Uncertain"
         confidence = "Medium"
     else:
@@ -24,8 +29,8 @@ def cross_validate(result1, result2):
         confidence = "Low"
 
     return {
-        "AI": round(ai_prob, 2),
-        "Real": round(real_prob, 2),
+        "AI": round(ai_avg * 100, 2),
+        "Real": round(real_avg * 100, 2),
         "final_decision": decision,
         "confidence": confidence
     }
