@@ -5,7 +5,15 @@ from PIL import Image
 
 def load_image(input_data: str):
     if input_data.startswith("http"):
-        return Image.open(requests.get(input_data, stream=True).raw)
+        headers = {
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+                          "AppleWebKit/537.36 (KHTML, like Gecko) "
+                          "Chrome/115.0 Safari/537.36"
+        }
+        response = requests.get(input_data, headers=headers, timeout=10)
+        response.raise_for_status()  # HTTP 에러 시 예외 발생
+        return Image.open(BytesIO(response.content))
+
     elif input_data.startswith("data:image"):
         base64_data = input_data.split(",")[1]
         return Image.open(BytesIO(base64.b64decode(base64_data)))
